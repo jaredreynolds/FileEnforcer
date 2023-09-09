@@ -4,15 +4,15 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FileEnforcer
+namespace FileEnforcer.Services
 {
-    public class WindowsBackgroundService<T> : BackgroundService where T : IService
+    public class DisposableBackgroundService<T> : BackgroundService where T : IService
     {
-        private readonly ILogger<WindowsBackgroundService<T>> _logger;
+        private readonly ILogger<DisposableBackgroundService<T>> _logger;
         private readonly T _service;
 
-        public WindowsBackgroundService(
-            T service, ILogger<WindowsBackgroundService<T>> logger)
+        public DisposableBackgroundService(
+            T service, ILogger<DisposableBackgroundService<T>> logger)
         {
             (_service, _logger) = (service, logger);
         }

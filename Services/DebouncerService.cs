@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Caching.Memory;
 using FileEnforcer.Extensions;
 
-namespace FileEnforcer
+namespace FileEnforcer.Services
 {
-    public class Debouncer<TItem, TContext>
+    public class DebouncerService<TItem, TContext>
     {
         private readonly MemoryCache _cache = new(new MemoryCacheOptions());
         private readonly Func<TItem, object> _keySelector;
@@ -12,7 +12,7 @@ namespace FileEnforcer
 
         public TimeSpan Delay { get; set; } = TimeSpan.FromSeconds(5);
 
-        public Debouncer(
+        public DebouncerService(
             Func<TItem, object> keySelector,
             Action<object, TItem, TContext> postDebounceAction)
         {

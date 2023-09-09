@@ -11,7 +11,7 @@ using FileEnforcer.Model;
 using FileEnforcer.Extensions;
 using System.Text.Json;
 
-namespace FileEnforcer
+namespace FileEnforcer.Services
 {
     public class FileWatcherService : IService
     {
@@ -19,13 +19,13 @@ namespace FileEnforcer
 
         private readonly Dictionary<FileSystemWatcher, FileWatcherTask> _watchers = new();
         private readonly IEnumerable<FileWatcherTask> _fileWatcherTasks;
-        private readonly Debouncer<FileWatcherTask, FileSystemWatcher> _debouncer;
-        private readonly FileEnforcement _fileEnforcement;
+        private readonly DebouncerService<FileWatcherTask, FileSystemWatcher> _debouncer;
+        private readonly FileEnforcementService _fileEnforcement;
         private readonly ILogger<FileWatcherService> _logger;
         private bool _isDisposed;
 
         public FileWatcherService(
-            IOptions<FileEnforcementOptions> options, FileEnforcement fileEnforcement, ILogger<FileWatcherService> logger)
+            IOptions<FileEnforcementOptions> options, FileEnforcementService fileEnforcement, ILogger<FileWatcherService> logger)
         {
             (_fileEnforcement, _logger) = (fileEnforcement, logger);
 
@@ -33,7 +33,7 @@ namespace FileEnforcer
                 .Where(fwo => fwo.Action != FileWatcherAction.Unknown);
             _logger.LogTrace(() => $"File watcher tasks with known actions: {JsonSerializer.Serialize(_fileWatcherTasks)}");
 
-            _debouncer = new Debouncer<FileWatcherTask, FileSystemWatcher>(o => o.Target, OnDebouncedFileChanged);
+            _debouncer = new DebouncerService<FileWatcherTask, FileSystemWatcher>(o => o.Target, OnDebouncedFileChanged);
         }
 
         public void Start()

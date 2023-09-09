@@ -4,14 +4,14 @@ using System.IO;
 using FileEnforcer.Model;
 using Microsoft.Extensions.Logging;
 
-namespace FileEnforcer
+namespace FileEnforcer.Services
 {
-    public class FileEnforcement
+    public class FileEnforcementService
     {
         private readonly Dictionary<FileWatcherAction, Action<FileWatcherTask>> _actions;
-        private readonly ILogger<FileEnforcement> _logger;
+        private readonly ILogger<FileEnforcementService> _logger;
 
-        public FileEnforcement(ILogger<FileEnforcement> logger)
+        public FileEnforcementService(ILogger<FileEnforcementService> logger)
         {
             _logger = logger;
 

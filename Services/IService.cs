@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FileEnforcer
+namespace FileEnforcer.Services
 {
     public interface IService : IDisposable
     {

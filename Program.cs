@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using FileEnforcer;
 using FileEnforcer.Configuration;
+using FileEnforcer.Services;
 
 using IHost host = Host
     .CreateDefaultBuilder(args)
@@ -12,8 +12,8 @@ using IHost host = Host
             .AddMemoryCache()
             .Configure<FileEnforcementOptions>(context.Configuration.GetSection("Settings"))
             .AddSingleton<FileWatcherService>()
-            .AddSingleton<FileEnforcement>()
-            .AddHostedService<WindowsBackgroundService<FileWatcherService>>();
+            .AddSingleton<FileEnforcementService>()
+            .AddHostedService<DisposableBackgroundService<FileWatcherService>>();
     })
     .Build();
 
