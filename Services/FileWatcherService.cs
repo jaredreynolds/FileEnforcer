@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
-using K4os.Hash.xxHash;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using FileEnforcer.Configuration;
@@ -15,8 +13,6 @@ namespace FileEnforcer.Services
 {
     public class FileWatcherService : IService
     {
-        private static readonly HashAlgorithm _hashfn = new XXH64().AsHashAlgorithm();
-
         private readonly Dictionary<FileSystemWatcher, FileWatcherTask> _watchers = new();
         private readonly IEnumerable<FileWatcherTask> _fileWatcherTasks;
         private readonly DebouncerService<FileWatcherTask, FileSystemWatcher> _debouncer;
@@ -38,11 +34,11 @@ namespace FileEnforcer.Services
 
         public void Start()
         {
-            UpdateAllFiles();
-
             var watchers = _fileWatcherTasks
                 .Select(task =>
                 {
+                    _fileEnforcement.Initialize(task);
+
                     var (directory, filename) = GetPathParts(task.Target);
                     var watcher = new FileSystemWatcher(directory, filename);
                     watcher.Changed += OnFileChanged;
@@ -51,23 +47,6 @@ namespace FileEnforcer.Services
                 });
 
             _watchers.AddRange(watchers);
-        }
-
-        private void UpdateAllFiles()
-        {
-            _logger.LogTrace("Updating all files.");
-
-            _fileWatcherTasks.ForEach(task =>
-            {
-                var sourceHash = _hashfn.ComputeHash(File.ReadAllBytes(task.Source));
-                var targetHash = _hashfn.ComputeHash(File.ReadAllBytes(task.Target));
-
-                if (!sourceHash.SequenceEqual(targetHash))
-                {
-                    _logger.LogInformation($"Overwriting file '{task.Target}' with '{task.Source}'.");
-                    File.Copy(task.Source, task.Target, overwrite: true);
-                }
-            });
         }
 
         private void OnFileChanged(object sender, FileSystemEventArgs e)
