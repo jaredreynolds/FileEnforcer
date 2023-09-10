@@ -1,9 +1,6 @@
-﻿using System;
+﻿namespace FileEnforcer.Services;
 
-namespace FileEnforcer.Services
+public interface IService : IDisposable
 {
-    public interface IService : IDisposable
-    {
-        void Start();
-    }
+    void Start();
 }

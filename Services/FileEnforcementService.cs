@@ -1,75 +1,69 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Hashing;
-using System.Linq;
+﻿using System.IO.Hashing;
 using FileEnforcer.Model;
-using Microsoft.Extensions.Logging;
 
-namespace FileEnforcer.Services
+namespace FileEnforcer.Services;
+
+public class FileEnforcementService
 {
-    public class FileEnforcementService
+    private readonly Dictionary<FileWatcherAction, Action<FileWatcherTask>> _initializations;
+    private readonly Dictionary<FileWatcherAction, Action<FileWatcherTask>> _actions;
+    private readonly ILogger<FileEnforcementService> _logger;
+
+    public FileEnforcementService(ILogger<FileEnforcementService> logger)
     {
-        private readonly Dictionary<FileWatcherAction, Action<FileWatcherTask>> _initializations;
-        private readonly Dictionary<FileWatcherAction, Action<FileWatcherTask>> _actions;
-        private readonly ILogger<FileEnforcementService> _logger;
+        _logger = logger;
 
-        public FileEnforcementService(ILogger<FileEnforcementService> logger)
+        _initializations = new()
         {
-            _logger = logger;
+            [FileWatcherAction.Copy] = CopyIfDifferent,
+            [FileWatcherAction.Unknown] = _ => { }
+        };
 
-            _initializations = new()
-            {
-                [FileWatcherAction.Copy] = CopyIfDifferent,
-                [FileWatcherAction.Unknown] = _ => { }
-            };
-
-            _actions = new()
-            {
-                [FileWatcherAction.Copy] = Copy,
-                [FileWatcherAction.Unknown] = _ => { }
-            };
-        }
-
-        public void Initialize(FileWatcherTask task)
+        _actions = new()
         {
-            _initializations[task.Action](task);
-        }
+            [FileWatcherAction.Copy] = Copy,
+            [FileWatcherAction.Unknown] = _ => { }
+        };
+    }
 
-        public void Execute(FileWatcherTask task)
-        {
-            _actions[task.Action](task);
-        }
+    public void Initialize(FileWatcherTask task)
+    {
+        _initializations[task.Action](task);
+    }
 
-        private void CopyIfDifferent(FileWatcherTask task)
-        {
-            var sourceHash = ComputeHashOfFile(task.Source);
-            var targetHash = ComputeHashOfFile(task.Target);
+    public void Execute(FileWatcherTask task)
+    {
+        _actions[task.Action](task);
+    }
 
-            if (!sourceHash.SequenceEqual(targetHash))
-            {
-                _logger.LogInformation($"Overwriting file '{task.Target}' with '{task.Source}'.");
-                File.Copy(task.Source, task.Target, overwrite: true);
-            }
+    private void CopyIfDifferent(FileWatcherTask task)
+    {
+        var sourceHash = ComputeHashOfFile(task.Source);
+        var targetHash = ComputeHashOfFile(task.Target);
 
-        }
-
-        private void Copy(FileWatcherTask task)
+        if (!sourceHash.SequenceEqual(targetHash))
         {
             _logger.LogInformation($"Overwriting file '{task.Target}' with '{task.Source}'.");
-
             File.Copy(task.Source, task.Target, overwrite: true);
         }
 
-        private static byte[] ComputeHashOfFile(string filePath)
-        {
-            var hashAlgorithm = new XxHash64();
-            using (var stream = File.OpenRead(filePath))
-            {
-                hashAlgorithm.Append(stream);
-            }
-            return hashAlgorithm.GetHashAndReset();
-        }
-
     }
+
+    private void Copy(FileWatcherTask task)
+    {
+        _logger.LogInformation($"Overwriting file '{task.Target}' with '{task.Source}'.");
+
+        File.Copy(task.Source, task.Target, overwrite: true);
+    }
+
+    private static byte[] ComputeHashOfFile(string filePath)
+    {
+        var hashAlgorithm = new XxHash64();
+        using (var stream = File.OpenRead(filePath))
+        {
+            hashAlgorithm.Append(stream);
+        }
+        return hashAlgorithm.GetHashAndReset();
+    }
+
 }

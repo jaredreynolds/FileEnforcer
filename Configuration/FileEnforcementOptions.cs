@@ -1,10 +1,8 @@
-﻿using System.Collections.Generic;
-using FileEnforcer.Model;
+﻿using FileEnforcer.Model;
 
-namespace FileEnforcer.Configuration
+namespace FileEnforcer.Configuration;
+
+public class FileEnforcementOptions
 {
-    public class FileEnforcementOptions
-    {
-        public IEnumerable<FileWatcherTask> Tasks { get; set; }
-    }
+    public IEnumerable<FileWatcherTask> Tasks { get; set; } = Enumerable.Empty<FileWatcherTask>();
 }

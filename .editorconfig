@@ -4,5 +4,5 @@ root = true
 [*]
 indent_style = space
 
-[*.json]
+[*.{json,csproj}]
 indent_size = 2

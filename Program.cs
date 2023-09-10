@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using FileEnforcer.Configuration;
+﻿using FileEnforcer.Configuration;
 using FileEnforcer.Services;
 
 using IHost host = Host

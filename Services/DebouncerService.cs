@@ -1,40 +1,41 @@
-﻿using System;
-using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.Extensions.Caching.Memory;
 using FileEnforcer.Extensions;
 
-namespace FileEnforcer.Services
+namespace FileEnforcer.Services;
+
+public class DebouncerService<TItem, TContext>
 {
-    public class DebouncerService<TItem, TContext>
+    private readonly MemoryCache _cache = new(new MemoryCacheOptions());
+    private readonly Func<TItem, object> _keySelector;
+    private readonly PostEvictionDelegate _postEvictionDelegate;
+
+    public TimeSpan Delay { get; set; } = TimeSpan.FromSeconds(5);
+    public ILogger? Logger { get; set; }
+
+    public DebouncerService(
+        Func<TItem, object> keySelector,
+        Action<object, TItem, TContext> postDebounceAction,
+        ILogger? logger = null)
     {
-        private readonly MemoryCache _cache = new(new MemoryCacheOptions());
-        private readonly Func<TItem, object> _keySelector;
-        private readonly PostEvictionDelegate _postEvictionDelegate;
+        _keySelector = keySelector;
+        _postEvictionDelegate = (key, value, reason, state) => postDebounceAction(key, (TItem)value!, (TContext)state!);
+        Logger = logger;
+    }
 
-        public TimeSpan Delay { get; set; } = TimeSpan.FromSeconds(5);
+    public void Debounce(TItem item, TContext context)
+    {
+        Logger?.LogTrace("{timestamp} In debounce", DateTime.Now.TimeOfDay);
 
-        public DebouncerService(
-            Func<TItem, object> keySelector,
-            Action<object, TItem, TContext> postDebounceAction)
+        _cache.GetOrCreate(_keySelector(item), cacheEntry =>
         {
-            _keySelector = keySelector;
-            _postEvictionDelegate = (key, value, reason, state) => postDebounceAction(key, (TItem)value, (TContext)state);
-        }
+            Logger?.LogTrace("{timestamp} Creating cache entry", DateTime.Now.TimeOfDay);
 
-        public void Debounce(TItem item, TContext context)
-        {
-            Console.WriteLine($"{DateTime.Now.TimeOfDay} In Debounce");
+            cacheEntry
+                .AddExpirationToken(Delay)
+                .SetAbsoluteExpiration(Delay)
+                .RegisterPostEvictionCallback(_postEvictionDelegate, context);
 
-            _cache.GetOrCreate(_keySelector(item), cacheEntry =>
-            {
-                Console.WriteLine($"{DateTime.Now.TimeOfDay} Creating cache entry");
-
-                cacheEntry
-                    .AddExpirationToken(Delay)
-                    .SetAbsoluteExpiration(Delay)
-                    .RegisterPostEvictionCallback(_postEvictionDelegate, context);
-
-                return item;
-            });
-        }
+            return item;
+        });
     }
 }

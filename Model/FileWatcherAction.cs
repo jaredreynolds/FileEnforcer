@@ -1,8 +1,7 @@
-﻿namespace FileEnforcer.Model
+﻿namespace FileEnforcer.Model;
+
+public enum FileWatcherAction
 {
-    public enum FileWatcherAction
-    {
-        Unknown = 0,
-        Copy = 1
-    }
+    Unknown = 0,
+    Copy = 1
 }
